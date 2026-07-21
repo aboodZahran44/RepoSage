@@ -1,0 +1,42 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/code/app
+    environment:
+      - DATABASE_URL=postgresql://reposage:reposage_pass@postgres:5432/reposage_db
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - postgres
+      - qdrant
+      - redis
+
+  postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=reposage
+      - POSTGRES_PASSWORD=reposage_pass
+      - POSTGRES_DB=reposage_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+  qdrant_data:
