@@ -122,11 +122,27 @@ def ask(repo_id: str, request: AskRequest, current_user: str = Depends(verify_to
 
 @app.post("/repos/{repo_id}/triage")
 def triage(repo_id: str, request: TriageRequest, current_user: str = Depends(verify_token)):
+    cached_result = get_cached(repo_id, "triage", request.issue_text)
+    if cached_result is not None:
+        return {"repo_id": repo_id, "results": cached_result["results"], "cached": True}
+
     result = triage_issue(request.issue_text, repo_id=repo_id)
-    return {"repo_id": repo_id, "results": result["triage_results"]}
+    response = {"repo_id": repo_id, "results": result["triage_results"]}
+
+    set_cached(repo_id, "triage", request.issue_text, {"results": result["triage_results"]})
+
+    return response
 
 
 @app.post("/repos/{repo_id}/review")
 def review(repo_id: str, request: ReviewRequest, current_user: str = Depends(verify_token)):
+    cached_result = get_cached(repo_id, "review", request.diff_text)
+    if cached_result is not None:
+        return {"repo_id": repo_id, "flags": cached_result["flags"], "cached": True}
+
     result = review_diff(request.diff_text, repo_id=repo_id)
-    return {"repo_id": repo_id, "flags": result["review_flags"]}
+    response = {"repo_id": repo_id, "flags": result["review_flags"]}
+
+    set_cached(repo_id, "review", request.diff_text, {"flags": result["review_flags"]})
+
+    return response
