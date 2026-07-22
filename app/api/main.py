@@ -16,8 +16,17 @@ from app.ingestion.pipeline import ingest_repository
 from app.ingestion.vector_store import store_chunks
 from app.api.cache import get_cached, set_cached
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="RepoSage")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 def on_startup():
