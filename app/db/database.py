@@ -5,9 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db.models import Base
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://reposage:reposage_pass@postgres:5432/reposage_db"
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://reposage:reposage_pass@postgres:5432/reposage_db")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
