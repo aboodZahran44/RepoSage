@@ -14,6 +14,7 @@ from app.db.database import get_db, init_db
 from app.db.models import Repo
 from app.ingestion.pipeline import ingest_repository
 from app.ingestion.vector_store import store_chunks
+from app.api.cache import get_cached, set_cached
 
 app = FastAPI(title="RepoSage")
 
@@ -108,9 +109,16 @@ def get_repo_status(repo_id: str, db: Session = Depends(get_db)):
 
 @app.post("/repos/{repo_id}/ask")
 def ask(repo_id: str, request: AskRequest, current_user: str = Depends(verify_token)):
-    result = ask_question(request.query, repo_id=repo_id)
-    return {"repo_id": repo_id, "query": request.query, "answer": result["answer"]}
+    cached_result = get_cached(repo_id, "ask", request.query)
+    if cached_result is not None:
+        return {"repo_id": repo_id, "query": request.query, "answer": cached_result["answer"], "cached": True}
 
+    result = ask_question(request.query, repo_id=repo_id)
+    response = {"repo_id": repo_id, "query": request.query, "answer": result["answer"]}
+
+    set_cached(repo_id, "ask", request.query, {"answer": result["answer"]})
+
+    return response
 
 @app.post("/repos/{repo_id}/triage")
 def triage(repo_id: str, request: TriageRequest, current_user: str = Depends(verify_token)):
