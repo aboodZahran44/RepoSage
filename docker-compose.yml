@@ -5,6 +5,8 @@ services:
       - "8000:8000"
     volumes:
       - ./app:/code/app
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgresql://reposage:reposage_pass@postgres:5432/reposage_db
       - QDRANT_URL=http://qdrant:6333

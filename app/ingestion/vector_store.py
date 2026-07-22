@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
@@ -9,8 +10,7 @@ from app.ingestion.embeddings import generate_embedding
 COLLECTION_NAME = "code_embeddings"
 VECTOR_SIZE = 1536  # matches text-embedding-3-small output size
 
-_client = QdrantClient(url="http://localhost:6333")
-
+_client = QdrantClient(url=os.getenv("QDRANT_URL", "http://localhost:6333"))
 
 def ensure_collection_exists() -> None:
     """
