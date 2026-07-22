@@ -7,6 +7,8 @@ from qdrant_client.models import Distance, PointStruct, VectorParams
 from app.ingestion.code_parser import CodeChunk
 from app.ingestion.embeddings import generate_embedding
 
+from qdrant_client.models import Distance, KeywordIndexParams, PayloadSchemaType, PointStruct, VectorParams
+
 _client = QdrantClient(
     url=os.getenv("QDRANT_URL", "http://localhost:6333"),
     api_key=os.getenv("QDRANT_API_KEY"),
@@ -18,7 +20,8 @@ VECTOR_SIZE = 1536
 
 def ensure_collection_exists() -> None:
     """
-    Creates the Qdrant collection if it doesn't already exist.
+    Creates the Qdrant collection if it doesn't already exist, and
+    ensures a payload index exists on repo_id for filtered queries.
     """
     existing = [c.name for c in _client.get_collections().collections]
     if COLLECTION_NAME not in existing:
@@ -26,6 +29,12 @@ def ensure_collection_exists() -> None:
             collection_name=COLLECTION_NAME,
             vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
         )
+
+    _client.create_payload_index(
+        collection_name=COLLECTION_NAME,
+        field_name="repo_id",
+        field_schema=PayloadSchemaType.KEYWORD,
+    )
 
 
 def store_chunks(chunks: list[CodeChunk], repo_id: str) -> int:
