@@ -2,19 +2,11 @@ from typing import TypedDict
 
 from langchain_openai import ChatOpenAI
 from langfuse import observe
+from langfuse.langchain import CallbackHandler
 from langgraph.graph import END, StateGraph
 
 from app.ingestion.retrieval import retrieve
 
-import os
-
-from langfuse import Langfuse
-
-Langfuse(
-    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
-    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
-    host=os.getenv("LANGFUSE_HOST"),
-)
 
 class QAState(TypedDict):
     query: str
@@ -24,6 +16,7 @@ class QAState(TypedDict):
 
 
 _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+_langfuse_handler = CallbackHandler()
 
 
 def retrieve_node(state: QAState) -> dict:
@@ -61,7 +54,7 @@ Question: {state['query']}
 
 Answer, and mention which file/symbol your answer is based on:"""
 
-    response = _llm.invoke(prompt)
+    response = _llm.invoke(prompt, config={"callbacks": [_langfuse_handler]})
     return {"answer": response.content}
 
 

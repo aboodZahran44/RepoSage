@@ -2,6 +2,7 @@ from typing import Literal, TypedDict
 
 from langchain_openai import ChatOpenAI
 from langfuse import observe
+from langfuse.langchain import CallbackHandler
 from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
@@ -31,6 +32,7 @@ class ReviewState(TypedDict):
 
 _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 _structured_llm = _llm.with_structured_output(ReviewOutput)
+_langfuse_handler = CallbackHandler()
 
 
 def retrieve_related_node(state: ReviewState) -> dict:
@@ -75,7 +77,9 @@ Existing related code in the codebase:
 If there are no issues, return an empty list of flags. Be specific and
 reference file paths when relevant."""
 
-    output: ReviewOutput = _structured_llm.invoke(prompt)
+    output: ReviewOutput = _structured_llm.invoke(
+        prompt, config={"callbacks": [_langfuse_handler]}
+    )
 
     return {"review_flags": [f.model_dump() for f in output.flags]}
 

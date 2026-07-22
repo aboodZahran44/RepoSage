@@ -47,3 +47,19 @@ on methodology itself (the strict single-symbol match may be under-crediting sem
 **Conclusion:** The retrieval system's real-world quality is significantly better than the strict metric suggested. Only one query (SSL certificate verification) is a genuine retrieval failure with no relevant file returned. This is a good example of over-strict evaluation criteria masking actual system quality — a key lesson for designing evaluation methodology, not just tuning the retrieval system itself.
 
 **Remaining known limitation:** SSL certificate verification query does not retrieve any chunk from `exceptions.py` (where `SSLError` is defined) in the top-5 — worth investigating further (e.g., whether `SSLError`'s chunk embedding is being outcompeted by more test-heavy content for this specific query).
+
+## Cost & Latency (via Langfuse tracking)
+
+Observed from Langfuse traces (model: gpt-4o-mini-2024-07-18):
+
+| Agent | Agent Latency | LLM Call Cost |
+|---|---|---|
+| qa_agent | ~4.3s | $0.000032 |
+| triage_agent | ~3.6s | $0.000114 |
+| review_agent | ~2.4s | $0.000133 |
+
+Cost and token usage are captured automatically per LLM call via Langfuse's LangChain `CallbackHandler` integration — no custom cost-tracking code was needed, since it's wired directly into each agent's LLM invocation.
+
+**Observation:** Triage and Review cost roughly 3-4x more per call than Q&A. This is expected: both retrieve more candidate chunks (k=8 and k=6 vs k=5 for Q&A) and produce larger structured outputs (multiple scored/flagged items vs a single free-text answer), resulting in more input and output tokens per call.
+
+**Practical implication:** At this cost level (fractions of a cent per request), running this system for realistic usage volumes (hundreds of requests/day) would cost well under $1/day — cost is not a practical constraint at this scale, though it would need to be monitored and potentially optimized (e.g., prompt trimming, cheaper models for simpler queries) at much higher volumes.

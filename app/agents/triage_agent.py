@@ -2,6 +2,7 @@ from typing import TypedDict
 
 from langchain_openai import ChatOpenAI
 from langfuse import observe
+from langfuse.langchain import CallbackHandler
 from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
@@ -27,6 +28,7 @@ class TriageState(TypedDict):
 
 _llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 _structured_llm = _llm.with_structured_output(TriageOutput)
+_langfuse_handler = CallbackHandler()
 
 
 def retrieve_node(state: TriageState) -> dict:
@@ -66,7 +68,9 @@ Candidate files:
 For each candidate file, provide a relevance_score (0.0 to 1.0) and a short
 reasoning. Only include files that are plausibly relevant (score > 0.1)."""
 
-    output: TriageOutput = _structured_llm.invoke(prompt)
+    output: TriageOutput = _structured_llm.invoke(
+        prompt, config={"callbacks": [_langfuse_handler]}
+    )
 
     return {"triage_results": [r.model_dump() for r in output.results]}
 
