@@ -1,10 +1,20 @@
 from typing import TypedDict
 
 from langchain_openai import ChatOpenAI
+from langfuse import observe
 from langgraph.graph import END, StateGraph
 
 from app.ingestion.retrieval import retrieve
 
+import os
+
+from langfuse import Langfuse
+
+Langfuse(
+    public_key=os.getenv("LANGFUSE_PUBLIC_KEY"),
+    secret_key=os.getenv("LANGFUSE_SECRET_KEY"),
+    host=os.getenv("LANGFUSE_HOST"),
+)
 
 class QAState(TypedDict):
     query: str
@@ -68,6 +78,7 @@ def build_qa_graph():
     return graph.compile()
 
 
+@observe(name="qa_agent")
 def ask_question(query: str, repo_id: str) -> dict:
     """
     Public entry point: runs the full Q&A agent graph and returns

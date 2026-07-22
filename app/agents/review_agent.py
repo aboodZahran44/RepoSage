@@ -1,6 +1,7 @@
 from typing import Literal, TypedDict
 
 from langchain_openai import ChatOpenAI
+from langfuse import observe
 from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
@@ -92,6 +93,7 @@ def build_review_graph():
     return graph.compile()
 
 
+@observe(name="review_agent")
 def review_diff(diff_text: str, repo_id: str) -> dict:
     """
     Public entry point: runs the full PR review agent graph and returns

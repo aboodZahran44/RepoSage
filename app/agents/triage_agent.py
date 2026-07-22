@@ -1,6 +1,7 @@
 from typing import TypedDict
 
 from langchain_openai import ChatOpenAI
+from langfuse import observe
 from langgraph.graph import END, StateGraph
 from pydantic import BaseModel, Field
 
@@ -83,6 +84,7 @@ def build_triage_graph():
     return graph.compile()
 
 
+@observe(name="triage_agent")
 def triage_issue(issue_text: str, repo_id: str) -> dict:
     """
     Public entry point: runs the full triage agent graph and returns
