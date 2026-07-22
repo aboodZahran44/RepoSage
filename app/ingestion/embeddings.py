@@ -8,7 +8,7 @@ load_dotenv(override=True)
 _client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 EMBEDDING_MODEL = "text-embedding-3-small"
-MAX_CHARS = 20000  # rough safety limit, well under the 8192 token cap
+MAX_CHARS = 20000
 
 
 def generate_embedding(text: str) -> list[float]:
