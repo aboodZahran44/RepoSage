@@ -9,6 +9,10 @@ from app.db.models import Repo
 from app.ingestion.pipeline import ingest_repository
 from app.ingestion.vector_store import store_chunks
 
+from app.agents.qa_agent import ask_question
+from app.agents.triage_agent import triage_issue
+from app.agents.review_agent import review_diff
+
 app = FastAPI(title="RepoSage")
 
 
@@ -88,14 +92,17 @@ def get_repo_status(repo_id: str, db: Session = Depends(get_db)):
 
 @app.post("/repos/{repo_id}/ask")
 def ask(repo_id: str, request: AskRequest):
-    return {"repo_id": repo_id, "query": request.query, "answer": "placeholder"}
+    result = ask_question(request.query, repo_id=repo_id)
+    return {"repo_id": repo_id, "query": request.query, "answer": result["answer"]}
 
 
 @app.post("/repos/{repo_id}/triage")
 def triage(repo_id: str, request: TriageRequest):
-    return {"repo_id": repo_id, "results": []}
+    result = triage_issue(request.issue_text, repo_id=repo_id)
+    return {"repo_id": repo_id, "results": result["triage_results"]}
 
 
 @app.post("/repos/{repo_id}/review")
 def review(repo_id: str, request: ReviewRequest):
-    return {"repo_id": repo_id, "flags": []}
+    result = review_diff(request.diff_text, repo_id=repo_id)
+    return {"repo_id": repo_id, "flags": result["review_flags"]}
